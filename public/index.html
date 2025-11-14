@@ -1,0 +1,62 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+    <title>T-Feed | Muro Social Avanzado</title>
+    <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+    
+    <div id="loginModal" class="modal">
+        <div class="modal-content">
+            <h1>Bienvenido a T-Feed</h1>
+            <p>Ingresa tu nombre de usuario:</p>
+            <form id="loginForm">
+                <input type="text" id="username" placeholder="@tu_usuario" required maxlength="25" />
+                <button type="submit" class="primary-btn">Entrar</button>
+            </form>
+        </div>
+    </div>
+    
+    <div class="app-container hidden-app">
+        <header>
+            <div class="header-title">
+                <span class="logo">T</span>
+                <h1>T-Feed</h1>
+            </div>
+            <div class="user-info">
+                <span>Conectado:</span> <span id="currentUser"></span>
+            </div>
+        </header>
+
+        <main>
+            <div class="new-post-area">
+                <form id="postForm">
+                    <textarea id="content" placeholder="¿Qué está pasando? (Máx. 280 caracteres)" required maxlength="280"></textarea>
+                    
+                    <div id="mediaPreview" class="media-preview hidden"></div>
+                    
+                    <div class="post-controls">
+                        <input type="file" id="mediaFile" accept="image/*,video/*" style="display: none;">
+                        
+                        <button type="button" id="mediaBtn" class="action-btn media-btn" title="Subir Imagen o Video">
+                            <span class="media-icon">📷</span>
+                        </button>
+                        
+                        <span id="charCount" class="char-count">280</span>
+                        <button type="submit" class="post-btn" disabled>Publicar</button>
+                    </div>
+                </form>
+            </div>
+
+            <div id="postsList" class="posts-feed">
+                <div class="loading-state">Cargando publicaciones...</div>
+            </div>
+        </main>
+    </div>
+
+    <script src="/socket.io/socket.io.js"></script>
+    <script src="script.js"></script>
+</body>
+</html>
