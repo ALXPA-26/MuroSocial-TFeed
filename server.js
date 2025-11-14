@@ -1,4 +1,4 @@
-// server.js (Mismo código de la respuesta anterior, ya está listo para manejar likes en cualquier post, incluyendo respuestas.)
+// server.js
 require('dotenv').config();
 
 const express = require('express');
@@ -11,10 +11,14 @@ const path = require('path');
 const fs = require('fs');
 const multer = require('multer');
 
-const Post = require('./models/post');
+const Post = require('./models/Post');
 
 const app = express();
 const server = http.createServer(app);
+
+// 💡 CORRECCIÓN CRUCIAL PARA RENDER:
+// Esto indica a Express que confíe en el proxy de Render para las cookies seguras (HTTPS).
+app.set('trust proxy', 1); 
 
 // --- CONFIGURACIÓN DE MULTER (Subida de Archivos) ---
 const UPLOAD_DIR = path.join(__dirname, 'public', 'uploads');
@@ -25,7 +29,7 @@ const storage = multer.diskStorage({
     destination: (req, file, cb) => cb(null, UPLOAD_DIR),
     filename: (req, file, cb) => cb(null, Date.now() + '-' + file.originalname.replace(/\s/g, '_'))
 });
-const upload = multer({ storage: storage, limits: { fileSize: 50 * 1024 * 1024 } });
+const upload = multer({ storage: storage, limits: { fileSize: 50 * 1024 * 1024 } }); // Límite de 50MB
 
 app.use(express.static('public'));
 app.use('/uploads', express.static(UPLOAD_DIR)); 
@@ -78,7 +82,6 @@ app.get('/api/posts', async (req, res) => {
     }
 });
 
-// NUEVA RUTA: Obtener respuestas para un post específico
 app.get('/api/posts/:id/replies', async (req, res) => {
     try {
         const replies = await Post.find({ replyToId: req.params.id }).sort({ createdAt: 1 });
@@ -93,7 +96,6 @@ app.post('/api/posts', upload.single('media'), async (req, res) => {
     const { content, type, replyToId, repostOfId } = req.body;
     const currentAuthor = req.session.author;
     
-    // Verificaciones
     if (!currentAuthor) return res.status(401).json({ error: 'Debe iniciar sesión para publicar.' });
     if (!content && !req.file && type !== 'repost') return res.status(400).json({ error: 'Contenido o multimedia son obligatorios.' });
     if (content && content.length > 280) return res.status(400).json({ error: 'Máximo 280 caracteres.' });
@@ -114,12 +116,11 @@ app.post('/api/posts', upload.single('media'), async (req, res) => {
         const newPost = new Post(postData);
         await newPost.save();
         
-        // Solo emitir a Socket.io si es un post o repost (para el feed principal)
+        // Emitir a Socket.io
         if (newPost.type === 'post' || newPost.type === 'repost') {
             const populatedPost = await Post.findById(newPost._id).populate('repostOfId');
             io.emit('newPost', populatedPost);
         } else if (newPost.type === 'reply' && newPost.replyToId) {
-            // Notificamos para actualizar la vista de respuestas si está abierta
             io.emit('replyUpdate', { replyToId: newPost.replyToId });
         }
         
@@ -152,7 +153,6 @@ app.post('/api/posts/:id/like', async (req, res) => {
 
         await post.save();
         
-        // Notificación en tiempo real
         io.emit('likeUpdate', { id: post._id, likes: post.likes, isLiked: !hasLiked });
         
         res.json({ likes: post.likes, isLiked: !hasLiked });
