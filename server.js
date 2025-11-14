@@ -11,7 +11,7 @@ const path = require('path');
 const fs = require('fs');
 const multer = require('multer');
 
-const Post = require('./models/Post');
+const Post = require('./models/post');
 
 const app = express();
 const server = http.createServer(app);
